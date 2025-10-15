@@ -1,9 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, History, Clock } from "lucide-react";
+import { LayoutDashboard, History, Clock, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Navigation = () => {
   const location = useLocation();
+  const { signOut } = useAuth();
 
   return (
     <nav className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
@@ -34,6 +36,10 @@ export const Navigation = () => {
                 Historia
               </Button>
             </Link>
+            <Button variant="ghost" onClick={signOut}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Wyloguj
+            </Button>
           </div>
         </div>
       </div>

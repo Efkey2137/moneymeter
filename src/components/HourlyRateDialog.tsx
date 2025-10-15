@@ -11,30 +11,59 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { DollarSign, Settings } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface HourlyRateDialogProps {
   onUpdate: () => void;
 }
 
 export const HourlyRateDialog = ({ onUpdate }: HourlyRateDialogProps) => {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [rate, setRate] = useState("");
 
   useEffect(() => {
-    const savedRate = localStorage.getItem('hourlyRate');
-    if (savedRate) {
-      setRate(savedRate);
+    if (open && user) {
+      loadRate();
     }
-  }, [open]);
+  }, [open, user]);
 
-  const handleSave = () => {
+  const loadRate = async () => {
+    if (!user) return;
+
+    const { data } = await supabase
+      .from('user_settings')
+      .select('hourly_rate')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (data) {
+      setRate(data.hourly_rate.toString());
+    }
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+
     const rateNumber = parseFloat(rate);
     if (isNaN(rateNumber) || rateNumber <= 0) {
       toast.error("Wprowadź poprawną stawkę");
       return;
     }
 
-    localStorage.setItem('hourlyRate', rate);
+    const { error } = await supabase
+      .from('user_settings')
+      .upsert({
+        user_id: user.id,
+        hourly_rate: rateNumber,
+      });
+
+    if (error) {
+      toast.error("Błąd zapisywania stawki");
+      return;
+    }
+
     toast.success("Zaktualizowano stawkę godzinową");
     setOpen(false);
     onUpdate();
