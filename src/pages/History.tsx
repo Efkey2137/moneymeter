@@ -90,7 +90,7 @@ const History = () => {
                         <TrendingUp className="w-5 h-5 text-primary" />
                         <span className="text-muted-foreground">Wypłata</span>
                       </div>
-                      <span className="text-xl font-bold gradient-primary bg-clip-text text-transparent">
+                      <span className="text-xl font-bold text-primary">
                         {formatCurrency(salary)}
                       </span>
                     </div>
