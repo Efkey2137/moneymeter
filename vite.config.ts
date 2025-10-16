@@ -17,22 +17,22 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico"],
       manifest: {
-        name: "WorkTime Tracker",
-        short_name: "WorkTime",
+        name: "MoneyMeter",
+        short_name: "MoneyMeter",
         description: "Śledź swój czas pracy i obliczaj wypłatę",
         theme_color: "#0ea5e9",
         background_color: "#1a1f2e",
         display: "standalone",
         icons: [
           {
-            src: "/placeholder.svg",
+            src: "/icon-192.png",
             sizes: "192x192",
-            type: "image/svg+xml",
+            type: "image/png",
           },
           {
-            src: "/placeholder.svg",
+            src: "/icon-512.png",
             sizes: "512x512",
-            type: "image/svg+xml",
+            type: "image/png",
           },
         ],
       },
