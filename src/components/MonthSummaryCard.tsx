@@ -25,7 +25,7 @@ export const MonthSummaryCard = ({ hours, salary, monthName }: MonthSummaryCardP
             <TrendingUp className="w-5 h-5 text-primary" />
             <span className="text-muted-foreground">Wypłata</span>
           </div>
-          <span className="text-2xl font-bold gradient-primary bg-clip-text text-transparent">
+          <span className="text-2xl font-bold text-primary">
             {formatCurrency(salary)}
           </span>
         </div>

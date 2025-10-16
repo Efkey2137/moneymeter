@@ -16,7 +16,12 @@ export const calculateHours = (startTime: string, endTime: string): number => {
   const end = parseTime(endTime);
   
   const startMinutes = start.hours * 60 + start.minutes;
-  const endMinutes = end.hours * 60 + end.minutes;
+  let endMinutes = end.hours * 60 + end.minutes;
+  
+  // Handle night shifts (e.g., 22:00 to 6:00)
+  if (endMinutes < startMinutes) {
+    endMinutes += 24 * 60; // Add 24 hours
+  }
   
   const totalMinutes = endMinutes - startMinutes;
   return totalMinutes / 60;
