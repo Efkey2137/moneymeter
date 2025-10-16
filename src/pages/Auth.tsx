@@ -100,7 +100,7 @@ const Auth = () => {
         <div className="flex items-center justify-center gap-2 mb-8">
           <Clock className="w-8 h-8 text-primary" />
           <h1 className="text-2xl font-bold text-primary">
-            WorkTime Tracker
+            MoneyMeter
           </h1>
         </div>
 

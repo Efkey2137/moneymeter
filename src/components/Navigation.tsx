@@ -14,7 +14,7 @@ export const Navigation = () => {
           <div className="flex items-center gap-2">
             <Clock className="w-6 h-6 text-primary" />
             <h1 className="text-xl font-bold text-primary">
-              WorkTime
+              MoneyMeter
             </h1>
           </div>
           <div className="flex gap-2">
