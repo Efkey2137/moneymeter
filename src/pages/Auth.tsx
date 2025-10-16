@@ -99,7 +99,7 @@ const Auth = () => {
       <Card className="w-full max-w-md p-8 gradient-card glow-primary">
         <div className="flex items-center justify-center gap-2 mb-8">
           <Clock className="w-8 h-8 text-primary" />
-          <h1 className="text-2xl font-bold gradient-primary bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold text-primary">
             WorkTime Tracker
           </h1>
         </div>

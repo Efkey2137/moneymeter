@@ -13,7 +13,7 @@ export const Navigation = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Clock className="w-6 h-6 text-primary" />
-            <h1 className="text-xl font-bold gradient-primary bg-clip-text text-transparent">
+            <h1 className="text-xl font-bold text-primary">
               WorkTime
             </h1>
           </div>
