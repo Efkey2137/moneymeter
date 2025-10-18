@@ -48,10 +48,13 @@ const Index = () => {
         if (localRate) {
           const { error } = await supabase
             .from('user_settings')
-            .upsert({
-              user_id: user.id,
-              hourly_rate: parseFloat(localRate),
-            });
+            .upsert(
+              {
+                user_id: user.id,
+                hourly_rate: parseFloat(localRate),
+              },
+              { onConflict: 'user_id' }
+            );
 
           if (!error) {
             localStorage.removeItem('hourlyRate');
@@ -118,7 +121,7 @@ const Index = () => {
     }
   };
 
-  const handleAddEntry = async (entry: Omit<TimeEntry, 'id'>) => {
+  const handleAddEntry = async (entry: { date: string; startTime: string; endTime: string; hours: number }) => {
     if (!user) return;
 
     const { data, error } = await supabase

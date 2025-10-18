@@ -54,10 +54,13 @@ export const HourlyRateDialog = ({ onUpdate }: HourlyRateDialogProps) => {
 
     const { error } = await supabase
       .from('user_settings')
-      .upsert({
-        user_id: user.id,
-        hourly_rate: rateNumber,
-      });
+      .upsert(
+        {
+          user_id: user.id,
+          hourly_rate: rateNumber,
+        },
+        { onConflict: 'user_id' }
+      );
 
     if (error) {
       toast.error("Błąd zapisywania stawki");
