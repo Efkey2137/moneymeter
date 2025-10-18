@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigation } from "@/components/Navigation";
 import { Card } from "@/components/ui/card";
 import { TimeEntry, groupEntriesByMonth, getMonthName, formatCurrency } from "@/lib/timeUtils";
-import { TrendingUp, Clock, Calendar } from "lucide-react";
+import { TrendingUp, Clock, Calendar, DollarSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { TimeEntriesList } from "@/components/TimeEntriesList";
@@ -105,13 +105,28 @@ const History = () => {
                     <AccordionTrigger className="p-6 hover:no-underline">
                       <div className="w-full">
                         <h2 className="text-2xl font-bold mb-4 text-left">{monthName}</h2>
-                        <div className="grid md:grid-cols-2 gap-4 mb-4">
+                        <div className="grid md:grid-cols-3 gap-4 mb-4">
                           <div className="flex items-center justify-between p-4 bg-background/30 rounded-lg">
                             <div className="flex items-center gap-2">
                               <Clock className="w-5 h-5 text-primary" />
                               <span className="text-muted-foreground">Godziny</span>
                             </div>
                             <span className="text-xl font-bold">{totalHours.toFixed(2)}h</span>
+                          </div>
+                          <div className="flex items-center justify-between p-4 bg-background/30 rounded-lg">
+                            <div className="flex items-center gap-2">
+                              <DollarSign className="w-5 h-5 text-primary" />
+                              <span className="text-muted-foreground">Stawka</span>
+                            </div>
+                            <span className="text-xl font-bold">
+                              {(() => {
+                                const rates = [...new Set(entries.map(e => e.hourlyRate))];
+                                if (rates.length === 1) {
+                                  return `${rates[0].toFixed(2)} PLN/h`;
+                                }
+                                return `${Math.min(...rates).toFixed(2)}-${Math.max(...rates).toFixed(2)} PLN/h`;
+                              })()}
+                            </span>
                           </div>
                           <div className="flex items-center justify-between p-4 bg-background/30 rounded-lg">
                             <div className="flex items-center gap-2">
