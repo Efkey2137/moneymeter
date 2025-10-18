@@ -39,8 +39,16 @@ export const TimeEntriesList = ({ entries, onDelete }: TimeEntriesListProps) => 
                   {entry.startTime} - {entry.endTime}
                 </span>
               </div>
-              <div className="text-primary font-semibold">
-                {entry.hours.toFixed(2)}h
+              <div className="flex items-center gap-3">
+                <span className="text-primary font-semibold">
+                  {entry.hours.toFixed(2)}h
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  × {entry.hourlyRate.toFixed(2)} PLN/h
+                </span>
+                <span className="text-sm font-medium">
+                  = {(entry.hours * entry.hourlyRate).toFixed(2)} PLN
+                </span>
               </div>
             </div>
             <Button
