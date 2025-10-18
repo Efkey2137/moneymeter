@@ -48,6 +48,7 @@ const History = () => {
         startTime: entry.start_time,
         endTime: entry.end_time,
         hours: entry.hours,
+        hourlyRate: entry.hourly_rate || 0,
       }));
       setEntriesByMonth(groupEntriesByMonth(formattedEntries));
     }
@@ -94,7 +95,7 @@ const History = () => {
             {sortedMonths.map((month) => {
               const entries = entriesByMonth[month];
               const totalHours = entries.reduce((sum, entry) => sum + entry.hours, 0);
-              const salary = totalHours * hourlyRate;
+              const salary = entries.reduce((sum, entry) => sum + (entry.hours * entry.hourlyRate), 0);
               const [year, monthNum] = month.split('-');
               const monthName = `${getMonthName(parseInt(monthNum) - 1)} ${year}`;
 

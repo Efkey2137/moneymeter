@@ -4,6 +4,7 @@ export interface TimeEntry {
   startTime: string;
   endTime: string;
   hours: number;
+  hourlyRate: number;
 }
 
 export const parseTime = (timeStr: string): { hours: number; minutes: number } => {

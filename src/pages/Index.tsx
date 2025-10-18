@@ -28,12 +28,13 @@ const Index = () => {
     const filtered = entries.filter(entry => entry.date.startsWith(currentMonth));
     setCurrentMonthEntries(filtered);
     
-    const total = filtered.reduce((sum, entry) => sum + entry.hours, 0);
+    const totalHours = filtered.reduce((sum, entry) => sum + entry.hours, 0);
+    const totalSalary = filtered.reduce((sum, entry) => sum + (entry.hours * entry.hourlyRate), 0);
     setMonthSummary({
-      hours: total,
-      salary: total * hourlyRate,
+      hours: totalHours,
+      salary: totalSalary,
     });
-  }, [entries, hourlyRate]);
+  }, [entries]);
 
   const migrateLocalData = async () => {
     if (!user) return;
@@ -111,6 +112,7 @@ const Index = () => {
         startTime: entry.start_time,
         endTime: entry.end_time,
         hours: entry.hours,
+        hourlyRate: entry.hourly_rate || 0,
       }));
       setEntries(formattedEntries);
     }
@@ -127,6 +129,7 @@ const Index = () => {
         start_time: entry.startTime,
         end_time: entry.endTime,
         hours: entry.hours,
+        hourly_rate: hourlyRate,
       })
       .select()
       .single();
@@ -142,6 +145,7 @@ const Index = () => {
       startTime: data.start_time,
       endTime: data.end_time,
       hours: data.hours,
+      hourlyRate: data.hourly_rate || 0,
     };
 
     setEntries([newEntry, ...entries]);

@@ -19,6 +19,7 @@ export type Database = {
           created_at: string
           date: string
           end_time: string
+          hourly_rate: number
           hours: number
           id: string
           start_time: string
@@ -29,6 +30,7 @@ export type Database = {
           created_at?: string
           date: string
           end_time: string
+          hourly_rate?: number
           hours: number
           id?: string
           start_time: string
@@ -39,6 +41,7 @@ export type Database = {
           created_at?: string
           date?: string
           end_time?: string
+          hourly_rate?: number
           hours?: number
           id?: string
           start_time?: string
