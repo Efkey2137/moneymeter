@@ -173,8 +173,8 @@ export const CalendarView = ({ entries, onDelete }: CalendarViewProps) => {
                       <div key={entry.id} className="flex items-center gap-0.5">
                         <div className="w-0.5 h-full min-h-[24px] bg-amber-400 rounded-full shrink-0" />
                         <div className="text-[10px] sm:text-xs leading-tight">
-                          <div className="font-mono">{entry.startTime}</div>
-                          <div className="font-mono">{entry.endTime}</div>
+                          <div className="font-mono">{entry.startTime.slice(0, 5)}</div>
+                          <div className="font-mono">{entry.endTime.slice(0, 5)}</div>
                         </div>
                       </div>
                     ))}
