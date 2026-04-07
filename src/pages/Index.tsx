@@ -2,15 +2,28 @@ import { useEffect, useState } from "react";
 import { Navigation } from "@/components/Navigation";
 import { HourlyRateDialog } from "@/components/HourlyRateDialog";
 import { DashboardCalendar } from "@/components/DashboardCalendar";
+import { TimeEntryForm } from "@/components/TimeEntryForm";
+import { TimeEntriesList } from "@/components/TimeEntriesList";
+import { MonthSummaryCard } from "@/components/MonthSummaryCard";
 import { TimeEntry, getCurrentMonth, getMonthName } from "@/lib/timeUtils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { CalendarDays, List } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 const Index = () => {
   const { user } = useAuth();
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [hourlyRate, setHourlyRate] = useState(0);
+  const [calendarView, setCalendarView] = useState(() => {
+    return localStorage.getItem("dashboardView") !== "list";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("dashboardView", calendarView ? "calendar" : "list");
+  }, [calendarView]);
 
   useEffect(() => {
     if (user) {
@@ -135,20 +148,50 @@ const Index = () => {
     toast.success("Usunięto wpis");
   };
 
+  const currentMonthStr = getCurrentMonth();
+  const currentMonthEntries = entries.filter(e => e.date.startsWith(currentMonthStr));
+  const monthHours = currentMonthEntries.reduce((s, e) => s + e.hours, 0);
+  const monthSalary = currentMonthEntries.reduce((s, e) => s + e.hours * e.hourlyRate, 0);
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold">Dashboard</h1>
-          <HourlyRateDialog onUpdate={loadData} />
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <List className="w-4 h-4 text-muted-foreground" />
+              <Switch
+                checked={calendarView}
+                onCheckedChange={setCalendarView}
+              />
+              <CalendarDays className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <HourlyRateDialog onUpdate={loadData} />
+          </div>
         </div>
 
-        <DashboardCalendar
-          entries={entries}
-          onAdd={handleAddEntry}
-          onDelete={handleDeleteEntry}
-        />
+        {calendarView ? (
+          <DashboardCalendar
+            entries={entries}
+            onAdd={handleAddEntry}
+            onDelete={handleDeleteEntry}
+          />
+        ) : (
+          <div className="space-y-6">
+            <MonthSummaryCard
+              hours={monthHours}
+              salary={monthSalary}
+              monthName={getMonthName(new Date().getMonth())}
+            />
+            <TimeEntryForm onAdd={handleAddEntry} />
+            <TimeEntriesList
+              entries={currentMonthEntries}
+              onDelete={handleDeleteEntry}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
