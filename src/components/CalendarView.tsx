@@ -207,11 +207,12 @@ export const CalendarView = ({ entries, onDelete }: CalendarViewProps) => {
             {(() => {
               const [y, m, d] = selectedDate.split("-").map(Number);
               return new Date(y, m - 1, d).toLocaleDateString("pl-PL", {
-              weekday: "long",
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            })}
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              });
+            })()}
           </h3>
           <div className="space-y-2">
             {selectedEntries.map((entry) => (
