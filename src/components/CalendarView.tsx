@@ -204,7 +204,9 @@ export const CalendarView = ({ entries, onDelete }: CalendarViewProps) => {
       {selectedDate && selectedEntries.length > 0 && (
         <Card className="gradient-card p-4">
           <h3 className="font-semibold mb-3">
-            {new Date(selectedDate + "T00:00:00").toLocaleDateString("pl-PL", {
+            {(() => {
+              const [y, m, d] = selectedDate.split("-").map(Number);
+              return new Date(y, m - 1, d).toLocaleDateString("pl-PL", {
               weekday: "long",
               day: "numeric",
               month: "long",
