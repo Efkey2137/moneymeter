@@ -211,11 +211,14 @@ export const DashboardCalendar = ({ entries, onAdd, onDelete }: DashboardCalenda
         <Card className="gradient-card p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold">
-              {new Date(selectedDate + "T00:00:00").toLocaleDateString("pl-PL", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-              })}
+              {(() => {
+                const [y, m, d] = selectedDate.split("-").map(Number);
+                return new Date(y, m - 1, d).toLocaleDateString("pl-PL", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                });
+              })()}
             </h3>
             <Button variant="ghost" size="icon" onClick={() => setSelectedDate(null)}>
               <X className="w-4 h-4" />
