@@ -83,7 +83,8 @@ export const CalendarView = ({ entries, onDelete }: CalendarViewProps) => {
     setSelectedDate(null);
   };
 
-  const toDateStr = (d: Date) => d.toISOString().split("T")[0];
+  const toDateStr = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
   // Monthly totals
   const monthStr = `${currentMonth.year}-${String(currentMonth.month + 1).padStart(2, "0")}`;
@@ -172,8 +173,8 @@ export const CalendarView = ({ entries, onDelete }: CalendarViewProps) => {
                       <div key={entry.id} className="flex items-center gap-0.5">
                         <div className="w-0.5 h-full min-h-[24px] bg-amber-400 rounded-full shrink-0" />
                         <div className="text-[10px] sm:text-xs leading-tight">
-                          <div className="font-mono">{entry.startTime}</div>
-                          <div className="font-mono">{entry.endTime}</div>
+                          <div className="font-mono">{entry.startTime.slice(0, 5)}</div>
+                          <div className="font-mono">{entry.endTime.slice(0, 5)}</div>
                         </div>
                       </div>
                     ))}
@@ -203,12 +204,15 @@ export const CalendarView = ({ entries, onDelete }: CalendarViewProps) => {
       {selectedDate && selectedEntries.length > 0 && (
         <Card className="gradient-card p-4">
           <h3 className="font-semibold mb-3">
-            {new Date(selectedDate + "T00:00:00").toLocaleDateString("pl-PL", {
-              weekday: "long",
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            })}
+            {(() => {
+              const [y, m, d] = selectedDate.split("-").map(Number);
+              return new Date(y, m - 1, d).toLocaleDateString("pl-PL", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              });
+            })()}
           </h3>
           <div className="space-y-2">
             {selectedEntries.map((entry) => (
