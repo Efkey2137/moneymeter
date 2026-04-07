@@ -83,7 +83,8 @@ export const CalendarView = ({ entries, onDelete }: CalendarViewProps) => {
     setSelectedDate(null);
   };
 
-  const toDateStr = (d: Date) => d.toISOString().split("T")[0];
+  const toDateStr = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
   // Monthly totals
   const monthStr = `${currentMonth.year}-${String(currentMonth.month + 1).padStart(2, "0")}`;
