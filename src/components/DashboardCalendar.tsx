@@ -182,8 +182,8 @@ export const DashboardCalendar = ({ entries, onAdd, onDelete }: DashboardCalenda
                       <div key={entry.id} className="flex items-center gap-0.5">
                         <div className="w-0.5 min-h-[24px] bg-amber-400 rounded-full shrink-0" />
                         <div className="text-[10px] sm:text-xs leading-tight font-mono">
-                          <div>{entry.startTime}</div>
-                          <div>{entry.endTime}</div>
+                          <div>{entry.startTime.slice(0, 5)}</div>
+                          <div>{entry.endTime.slice(0, 5)}</div>
                         </div>
                       </div>
                     ))}
