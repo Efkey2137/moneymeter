@@ -19,9 +19,9 @@ export default defineConfig(({ mode }) => ({
       manifest: {
         name: "MoneyMeter",
         short_name: "MoneyMeter",
-        description: "Śledź swój czas pracy i obliczaj wypłatę",
-        theme_color: "#0ea5e9",
-        background_color: "#1a1f2e",
+        description: "Śledź czas pracy na umowie o pracę i umowie zlecenia",
+        theme_color: "#25b9aa",
+        background_color: "#0d111c",
         display: "standalone",
         icons: [
           {

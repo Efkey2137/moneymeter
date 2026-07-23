@@ -1,10 +1,14 @@
+import type { EntryType } from "@/lib/employment";
+
 export interface TimeEntry {
   id: string;
   date: string;
-  startTime: string;
-  endTime: string;
+  startTime: string | null;
+  endTime: string | null;
   hours: number;
   hourlyRate: number;
+  entryType: EntryType;
+  note?: string | null;
 }
 
 export const parseTime = (timeStr: string): { hours: number; minutes: number } => {

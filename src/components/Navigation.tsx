@@ -1,48 +1,85 @@
 import { Link, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { LayoutDashboard, History, Clock, LogOut } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { LayoutDashboard, History, TimerReset } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ContractPeriod, UserSettings } from "@/lib/employment";
+import { SettingsDialog } from "@/components/SettingsDialog";
 
-export const Navigation = () => {
+interface NavigationProps {
+  settings?: UserSettings;
+  activePeriod?: ContractPeriod;
+  onSettingsUpdate?: () => void;
+}
+
+export const Navigation = ({
+  settings,
+  activePeriod,
+  onSettingsUpdate,
+}: NavigationProps) => {
   const location = useLocation();
-  const { signOut } = useAuth();
+  const links = [
+    { to: "/", label: "Dzisiaj", icon: LayoutDashboard },
+    { to: "/history", label: "Historia", icon: History },
+  ];
 
   return (
-    <nav className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
+    <>
+      <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
+          <Link to="/" className="flex items-center gap-2.5">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
+              <TimerReset className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="text-sm font-bold leading-none">MoneyMeter</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">Twój czas pod kontrolą</p>
+            </div>
+          </Link>
           <div className="flex items-center gap-2">
-            <Clock className="w-6 h-6 text-primary" />
-            <h1 className="text-xl font-bold text-primary hidden md:block">
-              MoneyMeter
-            </h1>
-          </div>
-          <div className="flex gap-2">
-            <Link to="/">
-              <Button
-                variant={location.pathname === "/" ? "default" : "ghost"}
-                className={`${location.pathname === "/" ? "gradient-primary" : ""} md:w-auto w-10`}
-              >
-                <LayoutDashboard className="w-4 h-4 md:mr-2" />
-                <span className="hidden md:inline">Dashboard</span>
-              </Button>
-            </Link>
-            <Link to="/history">
-              <Button
-                variant={location.pathname === "/history" ? "default" : "ghost"}
-                className={`${location.pathname === "/history" ? "gradient-primary" : ""} md:w-auto w-10`}
-              >
-                <History className="w-4 h-4 md:mr-2" />
-                <span className="hidden md:inline">Historia</span>
-              </Button>
-            </Link>
-            <Button variant="ghost" onClick={signOut} className="md:w-auto w-10">
-              <LogOut className="w-4 h-4 md:mr-2" />
-              <span className="hidden md:inline">Wyloguj</span>
-            </Button>
+            <nav className="hidden items-center rounded-xl border border-border bg-card/60 p-1 md:flex">
+              {links.map(({ to, label, icon: Icon }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  className={cn(
+                    "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    location.pathname === to
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </Link>
+              ))}
+            </nav>
+            <SettingsDialog
+              settings={settings}
+              activePeriod={activePeriod}
+              onUpdate={onSettingsUpdate}
+            />
           </div>
         </div>
-      </div>
-    </nav>
+      </header>
+
+      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-border/80 bg-background/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl md:hidden">
+        <div className="mx-auto grid max-w-sm grid-cols-2 gap-2">
+          {links.map(({ to, label, icon: Icon }) => (
+            <Link
+              key={to}
+              to={to}
+              className={cn(
+                "flex flex-col items-center gap-1 rounded-xl py-2 text-xs font-medium transition-colors",
+                location.pathname === to
+                  ? "bg-primary/12 text-primary"
+                  : "text-muted-foreground",
+              )}
+            >
+              <Icon className="h-5 w-5" />
+              {label}
+            </Link>
+          ))}
+        </div>
+      </nav>
+    </>
   );
 };

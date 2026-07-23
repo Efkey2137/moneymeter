@@ -87,8 +87,9 @@ const Auth = () => {
           toast.success("Konto utworzone! Możesz się teraz zalogować.");
         }
       }
-    } catch (error: any) {
-      toast.error("Wystąpił błąd: " + error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Nieznany błąd";
+      toast.error("Wystąpił błąd: " + message);
     } finally {
       setLoading(false);
     }

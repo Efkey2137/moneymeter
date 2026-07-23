@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -23,13 +23,7 @@ export const HourlyRateDialog = ({ onUpdate }: HourlyRateDialogProps) => {
   const [open, setOpen] = useState(false);
   const [rate, setRate] = useState("");
 
-  useEffect(() => {
-    if (open && user) {
-      loadRate();
-    }
-  }, [open, user]);
-
-  const loadRate = async () => {
+  const loadRate = useCallback(async () => {
     if (!user) return;
 
     const { data } = await supabase
@@ -41,7 +35,13 @@ export const HourlyRateDialog = ({ onUpdate }: HourlyRateDialogProps) => {
     if (data) {
       setRate(data.hourly_rate.toString());
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (open && user) {
+      loadRate();
+    }
+  }, [loadRate, open, user]);
 
   const handleSave = async () => {
     if (!user) return;

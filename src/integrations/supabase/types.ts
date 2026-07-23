@@ -18,33 +18,39 @@ export type Database = {
         Row: {
           created_at: string
           date: string
-          end_time: string
+          end_time: string | null
+          entry_type: string
           hourly_rate: number
           hours: number
           id: string
-          start_time: string
+          note: string | null
+          start_time: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
           date: string
-          end_time: string
+          end_time?: string | null
+          entry_type?: string
           hourly_rate?: number
           hours: number
           id?: string
-          start_time: string
+          note?: string | null
+          start_time?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
           date?: string
-          end_time?: string
+          end_time?: string | null
+          entry_type?: string
           hourly_rate?: number
           hours?: number
           id?: string
-          start_time?: string
+          note?: string | null
+          start_time?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -52,23 +58,128 @@ export type Database = {
       }
       user_settings: {
         Row: {
+          contract_type: string
           created_at: string
+          employment_fraction: number
           hourly_rate: number
           id: string
+          monthly_salary_net: number
+          onboarding_completed: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contract_type?: string
+          created_at?: string
+          employment_fraction?: number
+          hourly_rate?: number
+          id?: string
+          monthly_salary_net?: number
+          onboarding_completed?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contract_type?: string
+          created_at?: string
+          employment_fraction?: number
+          hourly_rate?: number
+          id?: string
+          monthly_salary_net?: number
+          onboarding_completed?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      contract_periods: {
+        Row: {
+          contract_type: string
+          created_at: string
+          effective_from: string
+          effective_to: string | null
+          employment_fraction: number
+          hourly_rate: number
+          id: string
+          monthly_salary_net: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contract_type: string
+          created_at?: string
+          effective_from: string
+          effective_to?: string | null
+          employment_fraction?: number
+          hourly_rate?: number
+          id?: string
+          monthly_salary_net?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contract_type?: string
+          created_at?: string
+          effective_from?: string
+          effective_to?: string | null
+          employment_fraction?: number
+          hourly_rate?: number
+          id?: string
+          monthly_salary_net?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      monthly_compensation: {
+        Row: {
+          created_at: string
+          id: string
+          month: string
+          net_amount: number
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
-          hourly_rate?: number
           id?: string
+          month: string
+          net_amount: number
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
-          hourly_rate?: number
           id?: string
+          month?: string
+          net_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      work_time_overrides: {
+        Row: {
+          created_at: string
+          id: string
+          month: string
+          target_hours: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          month: string
+          target_hours: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          month?: string
+          target_hours?: number
           updated_at?: string
           user_id?: string
         }
