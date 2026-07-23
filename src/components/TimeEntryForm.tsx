@@ -44,7 +44,7 @@ export const TimeEntryForm = ({ onAdd }: TimeEntryFormProps) => {
   };
 
   return (
-    <Card className="p-6 gradient-card glow-primary transition-smooth hover:scale-[1.02]">
+    <Card className="surface-card p-5 sm:p-6">
       <div className="flex items-center gap-2 mb-4">
         <Clock className="w-5 h-5 text-primary" />
         <h2 className="text-lg font-semibold">Dodaj czas pracy</h2>
@@ -84,7 +84,7 @@ export const TimeEntryForm = ({ onAdd }: TimeEntryFormProps) => {
             />
           </div>
         </div>
-        <Button type="submit" className="w-full gradient-primary">
+        <Button type="submit" className="h-11 w-full gradient-primary">
           <Plus className="w-4 h-4 mr-2" />
           Dodaj wpis
         </Button>

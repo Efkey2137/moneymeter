@@ -1,5 +1,19 @@
 # Welcome to your Lovable project
 
+## MoneyMeter
+
+MoneyMeter is a mobile-first PWA for tracking work time under two contract types:
+
+- **Umowa zlecenie** — hourly rate, work entries and calculated earnings.
+- **Umowa o pracę** — employment fraction, Polish monthly work-time norms,
+  quarterly progress, bulk vacation/sick-leave entries and effective monthly
+  net pay per accounted hour.
+
+Before deploying the updated frontend, apply the Supabase migrations from
+`supabase/migrations`. The latest migration keeps existing entries intact and
+adds contract periods, absence types, monthly compensation overrides and
+work-time target overrides.
+
 ## Project info
 
 **URL**: https://lovable.dev/projects/8713b4af-588b-47cd-9621-bdb29227569d

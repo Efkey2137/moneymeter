@@ -1,26 +1,50 @@
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
+import { Banknote, ChevronLeft, ChevronRight, Clock3, Plus, Target, Trash2, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { TimeEntry, formatCurrency, calculateHours } from "@/lib/timeUtils";
-import { ChevronLeft, ChevronRight, Clock, Banknote, Plus, X } from "lucide-react";
+import { ContractType, ENTRY_LABELS, EntryType } from "@/lib/employment";
+import { TimeEntry, calculateHours, formatCurrency } from "@/lib/timeUtils";
+import { getMonthlyWorkNorm } from "@/lib/workCalendar";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface DashboardCalendarProps {
   entries: TimeEntry[];
+  contractType: ContractType;
+  fraction: number;
+  monthOverrides?: Record<string, number>;
   onAdd: (entry: { date: string; startTime: string; endTime: string; hours: number }) => void;
   onDelete: (id: string) => void;
 }
 
-const DAYS_PL = ["Pon.", "Wt.", "Śr.", "Czw.", "Pt.", "Sob.", "Niedz."];
+const DAYS_PL = ["Pn", "Wt", "Śr", "Cz", "Pt", "So", "Nd"];
 const MONTHS_PL = [
   "Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
   "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień",
 ];
 
-export const DashboardCalendar = ({ entries, onAdd, onDelete }: DashboardCalendarProps) => {
+const entryDot: Record<EntryType, string> = {
+  work: "bg-primary",
+  vacation: "bg-amber-400",
+  sick_leave: "bg-rose-400",
+  other_absence: "bg-violet-400",
+};
+
+const toDateStr = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+    date.getDate(),
+  ).padStart(2, "0")}`;
+
+export const DashboardCalendar = ({
+  entries,
+  contractType,
+  fraction,
+  monthOverrides = {},
+  onAdd,
+  onDelete,
+}: DashboardCalendarProps) => {
   const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
     return { year: now.getFullYear(), month: now.getMonth() };
@@ -42,96 +66,85 @@ export const DashboardCalendar = ({ entries, onAdd, onDelete }: DashboardCalenda
     const { year, month } = currentMonth;
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
-
     let startDow = firstDay.getDay() - 1;
     if (startDow < 0) startDow = 6;
-
     const days: { date: Date; inMonth: boolean }[] = [];
 
-    for (let i = startDow - 1; i >= 0; i--) {
-      days.push({ date: new Date(year, month, -i), inMonth: false });
+    for (let index = startDow - 1; index >= 0; index -= 1) {
+      days.push({ date: new Date(year, month, -index), inMonth: false });
     }
-
-    for (let i = 1; i <= lastDay.getDate(); i++) {
-      days.push({ date: new Date(year, month, i), inMonth: true });
+    for (let day = 1; day <= lastDay.getDate(); day += 1) {
+      days.push({ date: new Date(year, month, day), inMonth: true });
     }
-
     const remaining = 7 - (days.length % 7);
     if (remaining < 7) {
-      for (let i = 1; i <= remaining; i++) {
-        days.push({ date: new Date(year, month + 1, i), inMonth: false });
+      for (let day = 1; day <= remaining; day += 1) {
+        days.push({ date: new Date(year, month + 1, day), inMonth: false });
       }
     }
-
     return days;
   }, [currentMonth]);
 
-  const prevMonth = () => {
-    setCurrentMonth((prev) =>
-      prev.month === 0 ? { year: prev.year - 1, month: 11 } : { ...prev, month: prev.month - 1 }
-    );
+  const moveMonth = (direction: -1 | 1) => {
+    setCurrentMonth((previous) => {
+      const date = new Date(previous.year, previous.month + direction, 1);
+      return { year: date.getFullYear(), month: date.getMonth() };
+    });
     setSelectedDate(null);
   };
 
-  const nextMonth = () => {
-    setCurrentMonth((prev) =>
-      prev.month === 11 ? { year: prev.year + 1, month: 0 } : { ...prev, month: prev.month + 1 }
-    );
-    setSelectedDate(null);
-  };
-
-  const toDateStr = (d: Date) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const monthKey = `${currentMonth.year}-${String(currentMonth.month + 1).padStart(2, "0")}`;
+  const monthEntries = entries.filter((entry) => entry.date.startsWith(monthKey));
+  const monthHours = monthEntries.reduce((sum, entry) => sum + entry.hours, 0);
+  const monthSalary = monthEntries.reduce(
+    (sum, entry) => sum + entry.hours * entry.hourlyRate,
+    0,
+  );
+  const monthTarget =
+    monthOverrides[monthKey] ??
+    getMonthlyWorkNorm(currentMonth.year, currentMonth.month, fraction);
+  const selectedEntries = selectedDate ? entriesByDate[selectedDate] || [] : [];
   const todayStr = toDateStr(new Date());
 
-  const monthStr = `${currentMonth.year}-${String(currentMonth.month + 1).padStart(2, "0")}`;
-  const monthEntries = entries.filter((e) => e.date.startsWith(monthStr));
-  const monthHours = monthEntries.reduce((s, e) => s + e.hours, 0);
-  const monthSalary = monthEntries.reduce((s, e) => s + e.hours * e.hourlyRate, 0);
-
-  const selectedEntries = selectedDate ? entriesByDate[selectedDate] || [] : [];
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
     if (!selectedDate || !startTime || !endTime) {
-      toast.error("Wypełnij godziny");
+      toast.error("Uzupełnij godzinę rozpoczęcia i zakończenia");
       return;
     }
     const hours = calculateHours(startTime, endTime);
-    if (hours <= 0) {
-      toast.error("Czas końcowy musi być późniejszy niż początkowy");
+    if (hours <= 0 || hours > 24) {
+      toast.error("Sprawdź podany zakres godzin");
       return;
     }
     onAdd({ date: selectedDate, startTime, endTime, hours });
     setStartTime("");
     setEndTime("");
-    toast.success("Dodano wpis czasu pracy");
+    toast.success("Dodano czas pracy");
   };
 
-  const isWeekend = (d: Date) => d.getDay() === 0 || d.getDay() === 6;
-
   return (
-    <div className="space-y-4">
-      <Card className="gradient-card overflow-hidden">
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <Button variant="ghost" size="icon" onClick={prevMonth}>
-            <ChevronLeft className="w-5 h-5" />
+    <div className="space-y-3">
+      <Card className="surface-card overflow-hidden">
+        <div className="flex items-center justify-between border-b border-border/70 p-3 sm:p-4">
+          <Button variant="ghost" size="icon" onClick={() => moveMonth(-1)} aria-label="Poprzedni miesiąc">
+            <ChevronLeft className="h-5 w-5" />
           </Button>
-          <h2 className="text-xl font-bold">
+          <h2 className="font-semibold sm:text-lg">
             {MONTHS_PL[currentMonth.month]} {currentMonth.year}
           </h2>
-          <Button variant="ghost" size="icon" onClick={nextMonth}>
-            <ChevronRight className="w-5 h-5" />
+          <Button variant="ghost" size="icon" onClick={() => moveMonth(1)} aria-label="Następny miesiąc">
+            <ChevronRight className="h-5 w-5" />
           </Button>
         </div>
 
-        <div className="grid grid-cols-7 border-b border-border">
-          {DAYS_PL.map((day, i) => (
+        <div className="grid grid-cols-7 border-b border-border/60 px-1">
+          {DAYS_PL.map((day, index) => (
             <div
               key={day}
               className={cn(
-                "text-center text-xs font-semibold py-2",
-                i >= 5 ? "text-destructive/70" : "text-muted-foreground"
+                "py-2 text-center text-[11px] font-semibold text-muted-foreground",
+                index >= 5 && "text-rose-300/70",
               )}
             >
               {day}
@@ -139,147 +152,139 @@ export const DashboardCalendar = ({ entries, onAdd, onDelete }: DashboardCalenda
           ))}
         </div>
 
-        <div className="grid grid-cols-7">
-          {calendarDays.map(({ date, inMonth }, idx) => {
+        <div className="grid grid-cols-7 p-1">
+          {calendarDays.map(({ date, inMonth }) => {
             const dateStr = toDateStr(date);
             const dayEntries = entriesByDate[dateStr] || [];
-            const hasEntries = dayEntries.length > 0;
-            const isToday = dateStr === todayStr;
-            const isSelected = dateStr === selectedDate;
-            const weekend = isWeekend(date);
-
+            const isSelected = selectedDate === dateStr;
+            const isToday = todayStr === dateStr;
+            const weekend = date.getDay() === 0 || date.getDay() === 6;
             return (
-              <div
-                key={idx}
-                onClick={() => inMonth && setSelectedDate(isSelected ? null : dateStr)}
+              <button
+                type="button"
+                key={dateStr}
+                disabled={!inMonth}
+                onClick={() => setSelectedDate(isSelected ? null : dateStr)}
                 className={cn(
-                  "border-b border-r border-border/50 min-h-[80px] sm:min-h-[100px] p-1 transition-colors cursor-pointer",
-                  !inMonth && "opacity-40 cursor-default",
-                  weekend && inMonth && "bg-destructive/5",
-                  hasEntries && "hover:bg-accent/30",
-                  !hasEntries && inMonth && "hover:bg-accent/10",
-                  isSelected && "bg-accent/50 ring-1 ring-primary",
+                  "relative flex min-h-[54px] flex-col items-center rounded-xl py-1.5 text-sm transition-colors sm:min-h-[70px]",
+                  !inMonth && "opacity-20",
+                  inMonth && "hover:bg-accent/60",
+                  weekend && inMonth && "text-rose-300/80",
+                  isSelected && "bg-primary/15 ring-1 ring-primary",
                 )}
               >
-                <div className="flex items-start justify-between">
-                  <span
-                    className={cn(
-                      "text-xs sm:text-sm font-medium leading-none",
-                      weekend && inMonth && "text-destructive/70",
-                      !inMonth && "text-muted-foreground",
-                      isToday && "bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs"
-                    )}
-                  >
-                    {date.getDate()}
-                  </span>
-                  {hasEntries && (
-                    <span className="w-2 h-2 rounded-full bg-green-500 mt-0.5 shrink-0" />
+                <span
+                  className={cn(
+                    "flex h-7 w-7 items-center justify-center rounded-full",
+                    isToday && "bg-primary font-bold text-primary-foreground",
                   )}
-                </div>
-                {hasEntries && (
-                  <div className="mt-1 space-y-0.5">
-                    {dayEntries.map((entry) => (
-                      <div key={entry.id} className="flex items-center gap-0.5">
-                        <div className="w-0.5 min-h-[24px] bg-amber-400 rounded-full shrink-0" />
-                        <div className="text-[10px] sm:text-xs leading-tight font-mono">
-                          <div>{entry.startTime.slice(0, 5)}</div>
-                          <div>{entry.endTime.slice(0, 5)}</div>
-                        </div>
-                      </div>
+                >
+                  {date.getDate()}
+                </span>
+                {dayEntries.length > 0 && (
+                  <span className="mt-1 flex max-w-full gap-1">
+                    {dayEntries.slice(0, 3).map((entry) => (
+                      <span
+                        key={entry.id}
+                        className={cn("h-1.5 w-1.5 rounded-full", entryDot[entry.entryType])}
+                      />
                     ))}
-                  </div>
+                  </span>
                 )}
-              </div>
+                {dayEntries.length > 0 && (
+                  <span className="mt-1 hidden text-[10px] text-muted-foreground sm:block">
+                    {dayEntries.reduce((sum, entry) => sum + entry.hours, 0).toFixed(1)} h
+                  </span>
+                )}
+              </button>
             );
           })}
         </div>
 
-        <div className="flex flex-wrap gap-4 justify-between items-center p-4 border-t border-border bg-background/30">
+        <div className="grid grid-cols-2 gap-2 border-t border-border/70 bg-background/25 p-3 text-sm sm:p-4">
           <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Godziny pracy</span>
-            <span className="font-bold">{monthHours.toFixed(1)}h</span>
+            <Clock3 className="h-4 w-4 text-primary" />
+            <div>
+              <p className="text-xs text-muted-foreground">Zapisano</p>
+              <p className="font-semibold">{monthHours.toFixed(1)} h</p>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Banknote className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Łączne zarobki</span>
-            <span className="font-bold text-primary">{formatCurrency(monthSalary)}</span>
-          </div>
+          {contractType === "employment" ? (
+            <div className="flex items-center justify-end gap-2">
+              <Target className="h-4 w-4 text-violet-300" />
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">Plan miesiąca</p>
+                <p className="font-semibold">{monthTarget.toFixed(1)} h</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-end gap-2">
+              <Banknote className="h-4 w-4 text-primary" />
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">Zarobki</p>
+                <p className="font-semibold">{formatCurrency(monthSalary)}</p>
+              </div>
+            </div>
+          )}
         </div>
       </Card>
 
       {selectedDate && (
-        <Card className="gradient-card p-4">
-          <div className="flex items-center justify-between mb-3">
+        <Card className="surface-card p-4">
+          <div className="mb-4 flex items-center justify-between">
             <h3 className="font-semibold">
-              {(() => {
-                const [y, m, d] = selectedDate.split("-").map(Number);
-                return new Date(y, m - 1, d).toLocaleDateString("pl-PL", {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                });
-              })()}
+              {new Date(`${selectedDate}T12:00:00`).toLocaleDateString("pl-PL", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+              })}
             </h3>
             <Button variant="ghost" size="icon" onClick={() => setSelectedDate(null)}>
-              <X className="w-4 h-4" />
+              <X className="h-4 w-4" />
             </Button>
           </div>
 
           {selectedEntries.length > 0 && (
-            <div className="space-y-2 mb-4">
+            <div className="mb-4 space-y-2">
               {selectedEntries.map((entry) => (
-                <div
-                  key={entry.id}
-                  className="flex items-center justify-between p-3 bg-background/30 rounded-lg"
-                >
-                  <div>
-                    <span className="font-mono text-sm">
-                      {entry.startTime} - {entry.endTime}
-                    </span>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-primary font-semibold text-sm">
-                        {entry.hours.toFixed(2)}h
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        = {(entry.hours * entry.hourlyRate).toFixed(2)} PLN
-                      </span>
+                <div key={entry.id} className="flex items-center justify-between rounded-xl bg-background/45 p-3">
+                  <div className="flex items-center gap-3">
+                    <span className={cn("h-2.5 w-2.5 rounded-full", entryDot[entry.entryType])} />
+                    <div>
+                      <p className="text-sm font-medium">{ENTRY_LABELS[entry.entryType]}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {entry.entryType === "work"
+                          ? `${entry.startTime?.slice(0, 5)}–${entry.endTime?.slice(0, 5)}`
+                          : "Wymiar naliczony automatycznie"}
+                        {" · "}
+                        {entry.hours.toFixed(2)} h
+                      </p>
                     </div>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => onDelete(entry.id)}
-                    className="text-destructive hover:text-destructive"
+                    className="text-destructive"
                   >
-                    <X className="w-4 h-4" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="flex items-end gap-2">
-            <div className="flex-1">
+          <form onSubmit={handleSubmit} className="grid grid-cols-[1fr_1fr_auto] items-end gap-2">
+            <div>
               <Label className="text-xs">Od</Label>
-              <Input
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                className="bg-background/50 h-9"
-              />
+              <Input type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} />
             </div>
-            <div className="flex-1">
+            <div>
               <Label className="text-xs">Do</Label>
-              <Input
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                className="bg-background/50 h-9"
-              />
+              <Input type="time" value={endTime} onChange={(event) => setEndTime(event.target.value)} />
             </div>
-            <Button type="submit" size="icon" className="gradient-primary h-9 w-9 shrink-0">
-              <Plus className="w-4 h-4" />
+            <Button type="submit" size="icon" className="gradient-primary">
+              <Plus className="h-4 w-4" />
             </Button>
           </form>
         </Card>
