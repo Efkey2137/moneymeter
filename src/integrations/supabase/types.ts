@@ -185,12 +185,50 @@ export type Database = {
         }
         Relationships: []
       }
+      quarterly_summaries: {
+        Row: {
+          created_at: string
+          id: string
+          note: string | null
+          quarter: number
+          reported_hours: number
+          updated_at: string
+          user_id: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          quarter: number
+          reported_hours: number
+          updated_at?: string
+          user_id: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          quarter?: number
+          reported_hours?: number
+          updated_at?: string
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      replace_contract_timeline: {
+        Args: {
+          p_periods: Json
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

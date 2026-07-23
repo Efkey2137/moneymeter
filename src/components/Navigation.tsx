@@ -6,13 +6,13 @@ import { SettingsDialog } from "@/components/SettingsDialog";
 
 interface NavigationProps {
   settings?: UserSettings;
-  activePeriod?: ContractPeriod;
+  periods?: ContractPeriod[];
   onSettingsUpdate?: () => void;
 }
 
 export const Navigation = ({
   settings,
-  activePeriod,
+  periods,
   onSettingsUpdate,
 }: NavigationProps) => {
   const location = useLocation();
@@ -54,7 +54,7 @@ export const Navigation = ({
             </nav>
             <SettingsDialog
               settings={settings}
-              activePeriod={activePeriod}
+              periods={periods}
               onUpdate={onSettingsUpdate}
             />
           </div>
