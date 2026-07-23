@@ -1,3 +1,9 @@
+import {
+  ContractPeriod,
+  ContractType,
+  getPeriodForDate,
+} from "@/lib/employment";
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const asUtcDate = (year: number, month: number, day: number) =>
@@ -98,6 +104,51 @@ export const getQuarterMonths = (date = new Date()): string[] => {
 
 export const getQuarterLabel = (date = new Date()): string =>
   `Q${Math.floor(date.getMonth() / 3) + 1} ${date.getFullYear()}`;
+
+export const getQuarterMonthsFor = (year: number, quarter: number): string[] => {
+  const firstMonth = (quarter - 1) * 3;
+  return [0, 1, 2].map(
+    (offset) => `${year}-${String(firstMonth + offset + 1).padStart(2, "0")}`,
+  );
+};
+
+export const getQuarterEndDate = (year: number, quarter: number): string => {
+  const lastMonth = quarter * 3;
+  const lastDay = new Date(Date.UTC(year, lastMonth, 0)).getUTCDate();
+  return `${year}-${String(lastMonth).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+};
+
+export const getQuarterNumber = (date: Date): number =>
+  Math.floor(date.getMonth() / 3) + 1;
+
+export const getContractMonthlyTarget = (
+  year: number,
+  month: number,
+  periods: ContractPeriod[],
+  fallbackContractType: ContractType,
+  fallbackFraction: number,
+  override?: number,
+): number => {
+  const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  let hasEmploymentDay = false;
+  let target = 0;
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const date = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const period = getPeriodForDate(periods, date);
+    const contractType = period?.contractType ?? fallbackContractType;
+    if (contractType !== "employment") continue;
+
+    hasEmploymentDay = true;
+    target += getDailyWorkNorm(
+      date,
+      period?.employmentFraction ?? fallbackFraction,
+    );
+  }
+
+  if (override !== undefined && hasEmploymentDay) return override;
+  return Math.round(target * 100) / 100;
+};
 
 export const getDateRange = (from: Date, to: Date): string[] => {
   const start = asUtcDate(from.getFullYear(), from.getMonth(), from.getDate());

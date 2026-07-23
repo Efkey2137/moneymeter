@@ -4,8 +4,10 @@ import { Banknote, Calendar, Clock3, Gauge, HeartPulse } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
 import { TimeEntriesList } from "@/components/TimeEntriesList";
 import { MonthlySalaryDialog } from "@/components/MonthlySalaryDialog";
+import { QuarterHistory } from "@/components/QuarterHistory";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Accordion,
   AccordionContent,
@@ -20,7 +22,10 @@ import {
   ContractType,
   DEFAULT_SETTINGS,
   EntryType,
+  QuarterlySummary,
   UserSettings,
+  applyPeriodToSettings,
+  getCurrentPeriod,
   getPeriodForDate,
 } from "@/lib/employment";
 import {
@@ -57,15 +62,28 @@ const History = () => {
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [periods, setPeriods] = useState<ContractPeriod[]>([]);
   const [compensation, setCompensation] = useState<Record<string, number>>({});
+  const [quarterlySummaries, setQuarterlySummaries] = useState<
+    Record<string, QuarterlySummary>
+  >({});
+  const [monthOverrides, setMonthOverrides] = useState<Record<string, number>>({});
   const [loaded, setLoaded] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!user) return;
-    const [settingsResult, entriesResult, periodsResult, compensationResult] = await Promise.all([
+    const [
+      settingsResult,
+      entriesResult,
+      periodsResult,
+      compensationResult,
+      summariesResult,
+      overridesResult,
+    ] = await Promise.all([
       supabase.from("user_settings").select("*").eq("user_id", user.id).maybeSingle(),
       supabase.from("time_entries").select("*").eq("user_id", user.id).order("date", { ascending: false }),
       supabase.from("contract_periods").select("*").eq("user_id", user.id).order("effective_from"),
       supabase.from("monthly_compensation").select("*").eq("user_id", user.id),
+      supabase.from("quarterly_summaries").select("*").eq("user_id", user.id),
+      supabase.from("work_time_overrides").select("*").eq("user_id", user.id),
     ]);
 
     const row = settingsResult.data;
@@ -98,6 +116,28 @@ const History = () => {
         (compensationResult.data || []).map((item) => [item.month.slice(0, 7), item.net_amount]),
       ),
     );
+    setQuarterlySummaries(
+      Object.fromEntries(
+        (summariesResult.data || []).map((item) => [
+          `${item.year}-Q${item.quarter}`,
+          {
+            id: item.id,
+            year: item.year,
+            quarter: item.quarter,
+            reportedHours: item.reported_hours,
+            note: item.note,
+          },
+        ]),
+      ),
+    );
+    setMonthOverrides(
+      Object.fromEntries(
+        (overridesResult.data || []).map((item) => [
+          item.month.slice(0, 7),
+          item.target_hours,
+        ]),
+      ),
+    );
     setLoaded(true);
   }, [user]);
 
@@ -126,31 +166,45 @@ const History = () => {
   if (!settings.onboardingCompleted) return <Navigate to="/" replace />;
 
   const sortedMonths = Object.keys(entriesByMonth).sort().reverse();
-  const activePeriod = [...periods].reverse().find((period) => !period.effectiveTo);
+  const effectiveSettings = applyPeriodToSettings(
+    settings,
+    getCurrentPeriod(periods),
+  );
+  const allEntries = Object.values(entriesByMonth).flat();
 
   return (
     <div className="min-h-screen pb-24 md:pb-8">
-      <Navigation settings={settings} activePeriod={activePeriod} onSettingsUpdate={loadData} />
+      <Navigation
+        settings={effectiveSettings}
+        periods={periods}
+        onSettingsUpdate={loadData}
+      />
       <main className="mx-auto max-w-5xl px-4 py-5 sm:py-8">
         <div className="mb-6">
-          <p className="text-sm font-medium text-primary">Miesiąc po miesiącu</p>
+          <p className="text-sm font-medium text-primary">Miesiące i kwartały</p>
           <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">Historia</h1>
           <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-            Sprawdź czas, nieobecności i realną wartość godziny. Kwotę wypłaty na umowie o pracę możesz poprawić osobno dla każdego miesiąca.
+            Sprawdź czas, nieobecności i realną wartość godziny. Zamknięte kwartały UoP możesz uzupełnić także bez wpisów dziennych.
           </p>
         </div>
 
-        {sortedMonths.length === 0 ? (
-          <Card className="surface-card p-10 text-center">
-            <Calendar className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-            <p className="font-semibold">Brak historii</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Pierwszy zakończony wpis pojawi się tutaj automatycznie.
-            </p>
-          </Card>
-        ) : (
-          <Accordion type="single" collapsible className="space-y-3">
-            {sortedMonths.map((month) => {
+        <Tabs defaultValue="months">
+          <TabsList className="mb-4 grid w-full grid-cols-2 sm:w-80">
+            <TabsTrigger value="months">Miesiące</TabsTrigger>
+            <TabsTrigger value="quarters">Kwartały</TabsTrigger>
+          </TabsList>
+          <TabsContent value="months" className="mt-0">
+            {sortedMonths.length === 0 ? (
+              <Card className="surface-card p-10 text-center">
+                <Calendar className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                <p className="font-semibold">Brak wpisów miesięcznych</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Możesz nadal przejść do kwartałów i uzupełnić wcześniejszy okres UoP.
+                </p>
+              </Card>
+            ) : (
+              <Accordion type="single" collapsible className="space-y-3">
+                {sortedMonths.map((month) => {
               const entries = entriesByMonth[month];
               const totalHours = entries.reduce((sum, entry) => sum + entry.hours, 0);
               const workHours = entries
@@ -158,12 +212,13 @@ const History = () => {
                 .reduce((sum, entry) => sum + entry.hours, 0);
               const absenceHours = totalHours - workHours;
               const period = getPeriodForDate(periods, `${month}-15`);
-              const contractType = period?.contractType ?? settings.contractType;
+              const contractType = period?.contractType ?? effectiveSettings.contractType;
               const mandateSalary = entries.reduce(
                 (sum, entry) => sum + entry.hours * entry.hourlyRate,
                 0,
               );
-              const defaultSalary = period?.monthlySalaryNet ?? settings.monthlySalaryNet;
+              const defaultSalary =
+                period?.monthlySalaryNet ?? effectiveSettings.monthlySalaryNet;
               const salary =
                 contractType === "employment"
                   ? compensation[month] ?? defaultSalary
@@ -245,9 +300,21 @@ const History = () => {
                   </Card>
                 </AccordionItem>
               );
-            })}
-          </Accordion>
-        )}
+                })}
+              </Accordion>
+            )}
+          </TabsContent>
+          <TabsContent value="quarters" className="mt-0">
+            <QuarterHistory
+              entries={allEntries}
+              periods={periods}
+              settings={effectiveSettings}
+              summaries={quarterlySummaries}
+              monthOverrides={monthOverrides}
+              onReload={loadData}
+            />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

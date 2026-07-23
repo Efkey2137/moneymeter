@@ -18,12 +18,14 @@ import {
   DEFAULT_SETTINGS,
   EntryType,
   UserSettings,
+  applyPeriodToSettings,
   formatFraction,
+  getCurrentPeriod,
   getPeriodForDate,
 } from "@/lib/employment";
 import { TimeEntry, getCurrentMonth, getMonthName } from "@/lib/timeUtils";
 import {
-  getMonthlyWorkNorm,
+  getContractMonthlyTarget,
   getQuarterMonths,
 } from "@/lib/workCalendar";
 import { toast } from "sonner";
@@ -119,7 +121,7 @@ const Index = () => {
   }) => {
     if (!user || !settings) return;
     const period = getPeriodForDate(periods, entry.date);
-    const rate = period?.hourlyRate ?? settings.hourlyRate;
+    const rate = period?.hourlyRate ?? effectiveSettings.hourlyRate;
     const { data, error } = await supabase
       .from("time_entries")
       .insert({
@@ -176,7 +178,8 @@ const Index = () => {
     toast.success("Wpis został usunięty");
   };
 
-  const activePeriod = [...periods].reverse().find((period) => !period.effectiveTo);
+  const activePeriod = getCurrentPeriod(periods);
+  const effectiveSettings = applyPeriodToSettings(settings ?? DEFAULT_SETTINGS, activePeriod);
   const earliestEntryDate = entries.reduce<string | undefined>(
     (earliest, entry) => (!earliest || entry.date < earliest ? entry.date : earliest),
     undefined,
@@ -196,18 +199,27 @@ const Index = () => {
   const quarterHours = quarterEntries.reduce((sum, entry) => sum + entry.hours, 0);
   const currentDate = new Date();
   const monthTarget =
-    monthOverrides[currentMonth] ??
-    getMonthlyWorkNorm(
+    getContractMonthlyTarget(
       currentDate.getFullYear(),
       currentDate.getMonth(),
-      settings?.employmentFraction ?? 1,
+      periods,
+      effectiveSettings.contractType,
+      effectiveSettings.employmentFraction,
+      monthOverrides[currentMonth],
     );
   const quarterTarget = quarterMonths.reduce((sum, month) => {
-    if (monthOverrides[month] !== undefined) return sum + monthOverrides[month];
     const [year, monthNumber] = month.split("-").map(Number);
-    const period = getPeriodForDate(periods, `${month}-15`);
-    const fraction = period?.employmentFraction ?? settings?.employmentFraction ?? 1;
-    return sum + getMonthlyWorkNorm(year, monthNumber - 1, fraction);
+    return (
+      sum +
+      getContractMonthlyTarget(
+        year,
+        monthNumber - 1,
+        periods,
+        effectiveSettings.contractType,
+        effectiveSettings.employmentFraction,
+        monthOverrides[month],
+      )
+    );
   }, 0);
 
   if (!loaded || !settings || !user) {
@@ -230,13 +242,13 @@ const Index = () => {
 
   return (
     <div className="min-h-screen pb-24 md:pb-8">
-      <Navigation settings={settings} activePeriod={activePeriod} onSettingsUpdate={loadData} />
+      <Navigation settings={effectiveSettings} periods={periods} onSettingsUpdate={loadData} />
       <main className="mx-auto max-w-5xl space-y-5 px-4 py-5 sm:py-8">
         <section className="flex items-end justify-between gap-4">
           <div>
             <p className="text-sm font-medium text-primary">
-              {settings.contractType === "employment"
-                ? formatFraction(settings.employmentFraction)
+              {effectiveSettings.contractType === "employment"
+                ? formatFraction(effectiveSettings.employmentFraction)
                 : "Umowa zlecenie"}
             </p>
             <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
@@ -250,7 +262,7 @@ const Index = () => {
           </div>
         </section>
 
-        {settings.contractType === "employment" ? (
+        {effectiveSettings.contractType === "employment" ? (
           <EmploymentSummary
             monthHours={monthHours}
             monthTarget={monthTarget}
@@ -266,7 +278,7 @@ const Index = () => {
           />
         )}
 
-        {settings.contractType === "employment" && (
+        {effectiveSettings.contractType === "employment" && (
           <Card className="surface-card p-4">
             <div className="mb-3 flex items-center gap-2">
               <WalletCards className="h-5 w-5 text-primary" />
@@ -276,7 +288,7 @@ const Index = () => {
               </div>
             </div>
             <AbsenceDialog
-              fraction={settings.employmentFraction}
+              fraction={effectiveSettings.employmentFraction}
               entries={entries}
               onAdd={handleAddAbsences}
             />
@@ -286,8 +298,8 @@ const Index = () => {
         {calendarView ? (
           <DashboardCalendar
             entries={entries}
-            contractType={settings.contractType}
-            fraction={settings.employmentFraction}
+            contractType={effectiveSettings.contractType}
+            fraction={effectiveSettings.employmentFraction}
             monthOverrides={monthOverrides}
             onAdd={handleAddEntry}
             onDelete={handleDeleteEntry}
@@ -298,7 +310,7 @@ const Index = () => {
             <TimeEntriesList
               entries={currentMonthEntries}
               onDelete={handleDeleteEntry}
-              showMoney={settings.contractType === "mandate"}
+              showMoney={effectiveSettings.contractType === "mandate"}
             />
           </div>
         )}

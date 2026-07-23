@@ -31,6 +31,14 @@ export interface WorkTimeOverride {
   targetHours: number;
 }
 
+export interface QuarterlySummary {
+  id?: string;
+  year: number;
+  quarter: number;
+  reportedHours: number;
+  note?: string | null;
+}
+
 export const DEFAULT_SETTINGS: UserSettings = {
   hourlyRate: 0,
   contractType: "mandate",
@@ -72,3 +80,36 @@ export const getPeriodForDate = (
       period.effectiveFrom <= date &&
       (!period.effectiveTo || period.effectiveTo >= date),
   );
+
+export const getTodayKey = (): string => {
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+    date.getDate(),
+  ).padStart(2, "0")}`;
+};
+
+export const getCurrentPeriod = (
+  periods: ContractPeriod[],
+  date = getTodayKey(),
+): ContractPeriod | undefined => {
+  const exact = getPeriodForDate(periods, date);
+  if (exact) return exact;
+
+  return [...periods]
+    .filter((period) => period.effectiveFrom <= date)
+    .sort((first, second) => second.effectiveFrom.localeCompare(first.effectiveFrom))[0];
+};
+
+export const applyPeriodToSettings = (
+  settings: UserSettings,
+  period?: ContractPeriod,
+): UserSettings =>
+  period
+    ? {
+        ...settings,
+        contractType: period.contractType,
+        employmentFraction: period.employmentFraction,
+        hourlyRate: period.hourlyRate,
+        monthlySalaryNet: period.monthlySalaryNet,
+      }
+    : settings;
